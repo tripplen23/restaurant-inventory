@@ -1,0 +1,89 @@
+{
+  "Nav": {
+    "brand": "厨房库存",
+    "eyebrow": "餐厅库存管理"
+  },
+  "Tabs": {
+    "stock": "库存",
+    "add": "添加",
+    "reorder": "补货",
+    "history": "记录",
+    "reports": "报表"
+  },
+  "Toggle": {
+    "label": "语言"
+  },
+  "Stock": {
+    "eyebrow": "现有库存",
+    "title": "今日库房",
+    "totalUnits": "总数量",
+    "reorder": "{count, plural, other {# 件商品需要补货}}",
+    "reorderView": "查看",
+    "colProduct": "商品",
+    "colOut": "出库",
+    "colIn": "入库",
+    "colOnHand": "现有",
+    "loading": "加载中…",
+    "errorPrefix": "错误"
+  },
+  "Badge": {
+    "ok": "充足",
+    "low": "偏低",
+    "urgent": "紧急",
+    "critical": "数据异常"
+  },
+  "Edit": {
+    "title": "编辑商品",
+    "name": "名称",
+    "unit": "单位",
+    "threshold": "最低库存",
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中…",
+    "nameRequired": "请输入名称",
+    "thresholdInvalid": "阈值必须 ≥ 0",
+    "saveFailed": "保存失败",
+    "updatedToast": "已更新 — {name}"
+  },
+  "Delete": {
+    "title": "删除商品",
+    "body": "确定删除 {name}？其交易记录也会一并删除,且无法恢复。",
+    "cancel": "取消",
+    "confirm": "删除",
+    "deleting": "删除中…",
+    "deleteFailed": "删除失败",
+    "deletedToast": "已删除 — {name}"
+  },
+  "Transaction": {
+    "mustBePositive": "数量必须大于 0",
+    "out": "出",
+    "in": "入",
+    "toastOut": "{name} 出库 {qty} {unit}",
+    "toastIn": "{name} 入库 {qty} {unit}"
+  },
+  "History": {
+    "title": "历史记录",
+    "noTransactions": "暂无交易记录"
+  },
+  "Reorder": {
+    "title": "需要补货",
+    "noItems": "所有商品库存充足"
+  },
+  "Reports": {
+    "title": "报表"
+  },
+  "Add": {
+    "title": "添加商品",
+    "eyebrow": "新商品",
+    "nameLabel": "名称",
+    "namePlaceholder": "例如:洋葱、柠檬、大蒜",
+    "unitLabel": "单位",
+    "thresholdLabel": "最低库存",
+    "thresholdHelp": "当库存低于此值时,该商品会出现在补货列表中。",
+    "save": "保存商品",
+    "saving": "保存中…",
+    "cancel": "取消",
+    "errorName": "请输入商品名称。",
+    "errorSave": "无法保存商品。"
+  }
+}

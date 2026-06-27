@@ -51,6 +51,14 @@
     background: var(--paper-50);
   }
 
+  /* When locale is Chinese, prefer Noto Sans SC for the body and CJK for the display heading */
+  html[lang^="zh"] body {
+    font-family: var(--font-zh), var(--font-body);
+  }
+  html[lang^="zh"] h1, html[lang^="zh"] h2, html[lang^="zh"] h3, html[lang^="zh"] h4 {
+    font-family: var(--font-zh), var(--font-display);
+  }
+
   body {
     /* iOS Safari: no bounce when scrolling past edges inside kiosk */
     overscroll-behavior: none;

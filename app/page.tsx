@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import type { Product } from '@/lib/types';
+import { useTranslations } from 'next-intl';
 import { classifyStock } from '@/lib/client-helpers';
 import { StockBadge } from '@/components/StockBadge';
 
@@ -14,6 +15,10 @@ type ToastState = {
 };
 
 export default function HomePage() {
+  const t = useTranslations('Stock');
+  const tEdit = useTranslations('Edit');
+  const tDelete = useTranslations('Delete');
+  const tTx = useTranslations('Transaction');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,14 +63,14 @@ export default function HomePage() {
   if (loading) {
     return (
       <div className="text-center py-20" style={{ color: 'var(--ink-500)' }}>
-        Loading stock…
+        {t('loading')}
       </div>
     );
   }
   if (error) {
     return (
       <div className="card" style={{ borderColor: 'var(--urgent)', color: 'var(--urgent)' }}>
-        Error: {error}
+        {t('errorPrefix')}: {error}
       </div>
     );
   }
@@ -78,11 +83,11 @@ export default function HomePage() {
       {/* Header — slim, no instruction subtext */}
       <header className="flex items-end justify-between gap-4">
         <div>
-          <div className="eyebrow">Stock on hand</div>
-          <h1 className="h-display mt-1">Today&apos;s pantry</h1>
+          <div className="eyebrow">{t('eyebrow')}</div>
+          <h1 className="h-display mt-1">{t('title')}</h1>
         </div>
         <div className="text-right">
-          <div className="eyebrow">Total units</div>
+          <div className="eyebrow">{t('totalUnits')}</div>
           <div
             key={stampKey}
             className="big-number animate-count"
@@ -115,13 +120,13 @@ export default function HomePage() {
                   color: 'var(--cinnabar)',
                 }}
               >
-                {low.length} item{low.length === 1 ? '' : 's'} need restock
+                {t('reorder', { count: low.length })}
               </div>
               <div style={{ color: 'var(--ink-700)', marginTop: 2, fontSize: '0.95rem' }}>
                 {low.map((p) => p.name.split(' (')[0]).join(' · ')}
               </div>
             </div>
-            <div style={{ color: 'var(--cinnabar)', fontWeight: 600 }}>View →</div>
+            <div style={{ color: 'var(--cinnabar)', fontWeight: 600 }}>{t('reorderView')} →</div>
           </div>
         </Link>
       )}
@@ -138,10 +143,10 @@ export default function HomePage() {
             borderBottom: '1px solid var(--paper-200)',
           }}
         >
-          <div>Product</div>
-          <div className="text-center" style={{ color: 'var(--ink-900)' }}>Out</div>
-          <div className="text-center" style={{ color: 'var(--cinnabar)' }}>In</div>
-          <div className="text-right">On hand</div>
+          <div>{t('colProduct')}</div>
+          <div className="text-center" style={{ color: 'var(--ink-900)' }}>{t('colOut')}</div>
+          <div className="text-center" style={{ color: 'var(--cinnabar)' }}>{t('colIn')}</div>
+          <div className="text-right">{t('colOnHand')}</div>
           <div></div>
         </div>
 
@@ -150,6 +155,8 @@ export default function HomePage() {
             <ProductRow
               key={p.id}
               product={p}
+              t={t}
+              tTx={tTx}
               onSubmit={async (type, qty) => {
                 const r = await fetch('/api/transactions', {
                   method: 'POST',
@@ -164,7 +171,9 @@ export default function HomePage() {
                 showToast({
                   kind: type,
                   tone: type === 'out' ? 'ink' : 'cinnabar',
-                  text: `${qty.toFixed(2)} ${p.unit} ${type === 'out' ? 'out' : 'in'} — ${p.name.split(' (')[0]}`,
+                  text: type === 'out'
+                    ? tTx('toastOut', { qty: qty.toFixed(2), unit: p.unit, name: p.name.split(' (')[0] })
+                    : tTx('toastIn', { qty: qty.toFixed(2), unit: p.unit, name: p.name.split(' (')[0] }),
                 });
                 await load();
               }}
@@ -183,7 +192,7 @@ export default function HomePage() {
           onSaved={async () => {
             setEditing(null);
             if (navigator.vibrate) navigator.vibrate(50);
-            showToast({ kind: 'edit', tone: 'jade', text: `Updated — ${editing.name.split(' (')[0]}` });
+            showToast({ kind: 'edit', tone: 'jade', text: tEdit('updatedToast', { name: editing.name.split(' (')[0] }) });
             await load();
           }}
         />
@@ -198,7 +207,7 @@ export default function HomePage() {
             const name = deleting.name.split(' (')[0];
             setDeleting(null);
             if (navigator.vibrate) navigator.vibrate([20, 30, 60]);
-            showToast({ kind: 'delete', tone: 'ink', text: `Deleted — ${name}` });
+            showToast({ kind: 'delete', tone: 'ink', text: tDelete('deletedToast', { name }) });
             await load();
           }}
         />
@@ -275,11 +284,15 @@ function ProductRow({
   onSubmit,
   onEdit,
   onDelete,
+  t,
+  tTx,
 }: {
   product: Product;
   onSubmit: (type: 'in' | 'out', qty: number) => Promise<void>;
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
+  t: ReturnType<typeof useTranslations<'Stock'>>;
+  tTx: ReturnType<typeof useTranslations<'Transaction'>>;
 }) {
   const [outVal, setOutVal] = useState('');
   const [inVal, setInVal] = useState('');
@@ -292,7 +305,7 @@ function ProductRow({
     if (!v) return;
     const n = Number(v);
     if (!Number.isFinite(n) || n <= 0) {
-      setErr('Must be > 0');
+      setErr(tTx('mustBePositive'));
       return;
     }
     setErr(null);
@@ -564,6 +577,7 @@ function EditModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations('Edit');
   const [name, setName] = useState(product.name);
   const [unit, setUnit] = useState(product.unit);
   const [threshold, setThreshold] = useState(String(product.threshold));
@@ -572,12 +586,12 @@ function EditModal({
 
   const submit = async () => {
     if (!name.trim()) {
-      setErr('Name required');
+      setErr(t('nameRequired'));
       return;
     }
-    const t = Number(threshold);
-    if (!Number.isFinite(t) || t < 0) {
-      setErr('Threshold must be ≥ 0');
+    const thr = Number(threshold);
+    if (!Number.isFinite(thr) || thr < 0) {
+      setErr(t('thresholdInvalid'));
       return;
     }
     setBusy(true);
@@ -589,25 +603,25 @@ function EditModal({
         body: JSON.stringify({
           name: name.trim(),
           unit: unit.trim() || 'box',
-          threshold: t,
+          threshold: thr,
         }),
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || 'Save failed');
+        throw new Error(d.error || t('saveFailed'));
       }
       onSaved();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Save failed');
+      setErr(e instanceof Error ? e.message : t('saveFailed'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <ModalShell onClose={onClose} title="Edit item" icon="edit">
+    <ModalShell onClose={onClose} title={t('title')} icon="edit">
       <div className="space-y-4">
-        <Field label="Name">
+        <Field label={t('name')}>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -618,7 +632,7 @@ function EditModal({
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Unit">
+          <Field label={t('unit')}>
             <input
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
@@ -626,7 +640,7 @@ function EditModal({
               style={{ fontSize: '1.2rem' }}
             />
           </Field>
-          <Field label="Min threshold">
+          <Field label={t('threshold')}>
             <input
               type="number"
               inputMode="decimal"
@@ -655,7 +669,7 @@ function EditModal({
             disabled={busy}
             className="btn-secondary flex-1"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={submit}
@@ -663,7 +677,7 @@ function EditModal({
             className="btn-primary flex-1"
             style={{ opacity: busy ? 0.5 : 1 }}
           >
-            {busy ? 'Saving…' : 'Save'}
+            {busy ? t('saving') : t('save')}
           </button>
         </div>
       </div>
@@ -680,6 +694,7 @@ function DeleteModal({
   onClose: () => void;
   onDeleted: () => void;
 }) {
+  const t = useTranslations('Delete');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -690,22 +705,21 @@ function DeleteModal({
       const r = await fetch(`/api/products/${product.id}`, { method: 'DELETE' });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || 'Delete failed');
+        throw new Error(d.error || t('deleteFailed'));
       }
       onDeleted();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Delete failed');
+      setErr(e instanceof Error ? e.message : t('deleteFailed'));
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <ModalShell onClose={onClose} title="Delete item" icon="danger">
+    <ModalShell onClose={onClose} title={t('title')} icon="danger">
       <div className="space-y-5">
         <p style={{ fontSize: '1.1rem', color: 'var(--ink-700)', lineHeight: 1.5 }}>
-          Delete <strong style={{ color: 'var(--ink-900)' }}>{product.name.split(' (')[0]}</strong>?
-          Its transaction history will also be removed. This cannot be undone.
+          {t('body', { name: product.name.split(' (')[0] })}
         </p>
 
         {err && (
@@ -723,7 +737,7 @@ function DeleteModal({
             disabled={busy}
             className="btn-secondary flex-1"
           >
-            Cancel
+            {t('cancel')}
           </button>
           <button
             onClick={confirm}
@@ -746,7 +760,7 @@ function DeleteModal({
             onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(1px) scale(0.99)'; }}
             onMouseUp={(e) => { e.currentTarget.style.transform = 'none'; }}
           >
-            {busy ? 'Deleting…' : 'Delete'}
+            {busy ? t('deleting') : t('confirm')}
           </button>
         </div>
       </div>
