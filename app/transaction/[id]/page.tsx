@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import type { Product } from '@/lib/types';
 import { NumPad } from '@/components/NumPad';
 
 export default function TransactionPage() {
+  const t = useTranslations('TransactionPage');
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const productId = params.id;
@@ -22,15 +24,15 @@ export default function TransactionPage() {
       .then((d) => {
         const p = d.products.find((x: Product) => x.id === productId);
         if (p) setProduct(p);
-        else setError('Product not found');
+        else setError(t('productNotFound'));
       });
-  }, [productId]);
+  }, [productId, t]);
 
   const submit = async () => {
     if (!mode || !value) return;
     const num = Number(value);
     if (!Number.isFinite(num) || num <= 0) {
-      setError('Invalid quantity');
+      setError(t('invalidQty'));
       return;
     }
     setSubmitting(true);
@@ -43,13 +45,13 @@ export default function TransactionPage() {
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || 'Save failed');
+        throw new Error(d.error || t('saveFailed'));
       }
       if (navigator.vibrate) navigator.vibrate(50);
       router.push('/');
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
+      setError(e instanceof Error ? e.message : t('genericError'));
     } finally {
       setSubmitting(false);
     }
@@ -65,7 +67,7 @@ export default function TransactionPage() {
   if (!product) {
     return (
       <div className="text-center py-20" style={{ color: 'var(--ink-500)' }}>
-        Loading…
+        {t('loading')}
       </div>
     );
   }
@@ -75,18 +77,18 @@ export default function TransactionPage() {
     return (
       <div className="space-y-7">
         <header>
-          <div className="eyebrow">Item</div>
+          <div className="eyebrow">{t('eyebrow')}</div>
           <h1 className="h-display mt-1">{product.name.split(' (')[0]}</h1>
           <div className="mt-3 flex items-baseline gap-2">
             <span className="big-number" style={{ color: 'var(--ink-900)' }}>
               {product.current_stock.toFixed(2)}
             </span>
-            <span className="eyebrow">{product.unit} on hand</span>
+            <span className="eyebrow">{t('onHand', { unit: product.unit })}</span>
           </div>
         </header>
 
         <p style={{ fontSize: '1.1rem', color: 'var(--ink-700)' }}>
-          What happened?
+          {t('whatHappened')}
         </p>
 
         {/* Big action chooser — kanji is the signature callout */}
@@ -113,9 +115,9 @@ export default function TransactionPage() {
               +
             </span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 500, color: 'var(--cinnabar)' }}>
-              Stock In
+              {t('stockIn')}
             </span>
-            <span className="eyebrow">Received from supplier</span>
+            <span className="eyebrow">{t('stockInDesc')}</span>
           </button>
 
           <button
@@ -140,9 +142,9 @@ export default function TransactionPage() {
               −
             </span>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.2rem', fontWeight: 500 }}>
-              Stock Out
+              {t('stockOut')}
             </span>
-            <span className="eyebrow">Sent to the kitchen</span>
+            <span className="eyebrow">{t('stockOutDesc')}</span>
           </button>
         </div>
 
@@ -151,7 +153,7 @@ export default function TransactionPage() {
           className="btn-ghost w-full"
           style={{ fontSize: '1rem' }}
         >
-          ← Cancel
+          {t('cancel')}
         </button>
       </div>
     );
@@ -171,15 +173,15 @@ export default function TransactionPage() {
           </span>
           <div>
             <div className="eyebrow">
-              {product.name.split(' (')[0]} · {mode === 'in' ? 'Stock In' : 'Stock Out'}
+              {product.name.split(' (')[0]} · {mode === 'in' ? t('stockIn') : t('stockOut')}
             </div>
             <h1 className="h-display mt-1">
-              {mode === 'in' ? 'How much came in?' : 'How much went out?'}
+              {mode === 'in' ? t('howMuchIn') : t('howMuchOut')}
             </h1>
           </div>
         </div>
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="eyebrow">On hand</span>
+          <span className="eyebrow">{t('onHandLabel')}</span>
           <span className="num" style={{ color: 'var(--ink-900)', fontWeight: 600 }}>
             {product.current_stock.toFixed(2)}
           </span>
@@ -190,12 +192,12 @@ export default function TransactionPage() {
       <div className="card">
         <NumPad value={value} onChange={setValue} onCommit={submit} />
         <p style={{ color: 'var(--ink-500)', fontSize: '0.85rem', marginTop: 12 }}>
-          Decimals supported: 0.25 (quarter box), 0.33 (third box).
+          {t('decimalHelp')}
         </p>
       </div>
 
       {submitting && (
-        <p className="text-center" style={{ color: 'var(--ink-500)' }}>Saving…</p>
+        <p className="text-center" style={{ color: 'var(--ink-500)' }}>{t('saving')}</p>
       )}
 
       <button
@@ -206,7 +208,7 @@ export default function TransactionPage() {
         className="btn-ghost w-full"
         style={{ fontSize: '1rem' }}
       >
-        ← Change action
+        {t('changeAction')}
       </button>
     </div>
   );

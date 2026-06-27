@@ -159,6 +159,8 @@ export default function HomePage() {
               product={p}
               t={t}
               tTx={tTx}
+              tEdit={tEdit}
+              tDelete={tDelete}
               onRequest={(type, qty, rowSetter) => {
                 // Open confirm modal; row.clearInput() is called only after confirm or cancel
                 setPendingTx({ type, qty, product: p, rowSetter });
@@ -329,6 +331,8 @@ function ProductRow({
   onDelete,
   t,
   tTx,
+  tEdit,
+  tDelete,
 }: {
   product: Product;
   onRequest: (type: 'in' | 'out', qty: number, rowSetter: (v: string) => void) => void;
@@ -336,6 +340,8 @@ function ProductRow({
   onDelete: (p: Product) => void;
   t: ReturnType<typeof useTranslations<'Stock'>>;
   tTx: ReturnType<typeof useTranslations<'Transaction'>>;
+  tEdit: ReturnType<typeof useTranslations<'Edit'>>;
+  tDelete: ReturnType<typeof useTranslations<'Delete'>>;
 }) {
   const [outVal, setOutVal] = useState('');
   const [inVal, setInVal] = useState('');
@@ -424,7 +430,7 @@ function ProductRow({
           <IconButton
             onClick={() => onEdit(product)}
             aria-label={`Edit ${product.name}`}
-            title="Edit"
+            title={tEdit('title')}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12 20h9" />
@@ -434,7 +440,7 @@ function ProductRow({
           <IconButton
             onClick={() => onDelete(product)}
             aria-label={`Delete ${product.name}`}
-            title="Delete"
+            title={tDelete('title')}
             tone="danger"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

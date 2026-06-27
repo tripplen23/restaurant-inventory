@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type Props = {
   value: string;
@@ -11,6 +12,7 @@ type Props = {
 // Numpad lớn cho môi trường bếp: găng tay dày, đứng trước kho lạnh.
 // Aesthetic: ink-black display, washi paper keys, cinnabar commit.
 export function NumPad({ value, onChange, onCommit }: Props) {
+  const t = useTranslations('NumPad');
   const [err, setErr] = useState<string | null>(null);
 
   const press = (k: string) => {
@@ -108,7 +110,7 @@ export function NumPad({ value, onChange, onCommit }: Props) {
           onClick={() => press('.')}
           className="btn-touch"
           type="button"
-          aria-label="Decimal point"
+          aria-label={t('decimal')}
           style={{
             background: 'var(--paper-50)',
             color: 'var(--ink-900)',
@@ -137,7 +139,7 @@ export function NumPad({ value, onChange, onCommit }: Props) {
           onClick={() => press('back')}
           className="btn-touch"
           type="button"
-          aria-label="Backspace"
+          aria-label={t('backspace')}
           style={{
             background: 'var(--paper-100)',
             color: 'var(--ink-700)',

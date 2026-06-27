@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Product } from '@/lib/types';
 
 export default function ReorderPage() {
+  const t = useTranslations('Reorder');
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
@@ -19,10 +21,10 @@ export default function ReorderPage() {
   return (
     <div className="space-y-7">
       <header>
-        <div className="eyebrow">Restock</div>
-        <h1 className="h-display mt-1">Reorder</h1>
+        <div className="eyebrow">{t('eyebrow')}</div>
+        <h1 className="h-display mt-1">{t('title')}</h1>
         <p style={{ color: 'var(--ink-500)', marginTop: 6, fontSize: '1rem' }}>
-          Items below their minimum threshold.
+          {t('subtitle')}
         </p>
       </header>
 
@@ -47,10 +49,10 @@ export default function ReorderPage() {
                 color: 'var(--jade)',
               }}
             >
-              All items are above threshold
+              {t('allAbove')}
             </div>
             <div style={{ color: 'var(--ink-500)', fontSize: '0.9rem', marginTop: 2 }}>
-              No restock needed right now.
+              {t('noRestock')}
             </div>
           </div>
         </div>
@@ -94,7 +96,7 @@ export default function ReorderPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="eyebrow">Order</div>
+                      <div className="eyebrow">{t('order')}</div>
                       <div
                         className="num"
                         style={{
@@ -120,7 +122,7 @@ export default function ReorderPage() {
             className="btn-primary w-full no-print"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}
           >
-            Print list
+            {t('printList')}
           </button>
         </>
       )}

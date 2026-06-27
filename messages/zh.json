@@ -8,7 +8,8 @@
     "add": "添加",
     "reorder": "补货",
     "history": "记录",
-    "reports": "报表"
+    "reports": "报表",
+    "primary": "主导航"
   },
   "Toggle": {
     "label": "语言"
@@ -69,20 +70,81 @@
     "cancel": "取消",
     "confirm": "确认"
   },
+  "TransactionPage": {
+    "eyebrow": "商品",
+    "onHand": "现有 {unit}",
+    "whatHappened": "发生了什么?",
+    "stockIn": "入库",
+    "stockInDesc": "供应商送货",
+    "stockOut": "出库",
+    "stockOutDesc": "送至厨房",
+    "cancel": "← 取消",
+    "howMuchIn": "入库多少?",
+    "howMuchOut": "出库多少?",
+    "onHandLabel": "现有",
+    "decimalHelp": "支持小数:0.25 (四分之一箱)、0.33 (三分之一箱)。",
+    "saving": "保存中…",
+    "changeAction": "← 更改操作",
+    "loading": "加载中…",
+    "invalidQty": "数量无效",
+    "saveFailed": "保存失败",
+    "genericError": "错误",
+    "productNotFound": "未找到商品"
+  },
+  "NumPad": {
+    "decimal": "小数点",
+    "backspace": "退格"
+  },
   "History": {
+    "eyebrow": "交易记录",
     "title": "历史记录",
-    "noTransactions": "暂无交易记录"
+    "subtitle": "最近的变动,按日期和班次分组。",
+    "all": "全部",
+    "noTransactions": "暂无交易记录。",
+    "shifts": {
+      "morning": "早班",
+      "afternoon": "午班",
+      "evening": "晚班"
+    },
+    "shiftShort": {
+      "morning": "早",
+      "afternoon": "午",
+      "evening": "晚"
+    },
+    "shiftSuffix": "班",
+    "entry": "{count, plural, other {# 笔记录}}",
+    "stockIn": "入库",
+    "stockOut": "出库"
   },
   "Reorder": {
+    "eyebrow": "补货",
     "title": "需要补货",
-    "noItems": "所有商品库存充足"
+    "subtitle": "库存低于最低阈值的商品。",
+    "allAbove": "所有商品库存充足",
+    "noRestock": "目前无需补货。",
+    "order": "订购",
+    "printList": "打印清单"
   },
   "Reports": {
-    "title": "报表"
+    "eyebrow": "最近 30 天",
+    "title": "报表",
+    "subtitle": "入库/出库,含消耗预测。",
+    "loading": "加载中…",
+    "noData": "暂无数据。",
+    "in": "入库",
+    "out": "出库",
+    "onHand": "现有",
+    "last14Out": "最近 14 天出库",
+    "dailyAvg": "日均:",
+    "runOutToday": "今日将耗尽。",
+    "daysLeft": "预计还剩 {days} 天库存。",
+    "runOutAria": "今日将耗尽",
+    "urg": "急"
   },
   "Add": {
     "title": "添加商品",
     "eyebrow": "新商品",
+    "subtitle": "新商品会显示在库存页面。",
     "nameLabel": "名称",
     "namePlaceholder": "例如:洋葱、柠檬、大蒜",
     "unitLabel": "单位",

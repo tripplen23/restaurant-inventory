@@ -8,7 +8,8 @@
     "add": "Add",
     "reorder": "Reorder",
     "history": "History",
-    "reports": "Reports"
+    "reports": "Reports",
+    "primary": "Primary"
   },
   "Toggle": {
     "label": "Language"
@@ -69,20 +70,81 @@
     "cancel": "Cancel",
     "confirm": "Confirm"
   },
+  "TransactionPage": {
+    "eyebrow": "Item",
+    "onHand": "{unit} on hand",
+    "whatHappened": "What happened?",
+    "stockIn": "Stock In",
+    "stockInDesc": "Received from supplier",
+    "stockOut": "Stock Out",
+    "stockOutDesc": "Sent to the kitchen",
+    "cancel": "← Cancel",
+    "howMuchIn": "How much came in?",
+    "howMuchOut": "How much went out?",
+    "onHandLabel": "On hand",
+    "decimalHelp": "Decimals supported: 0.25 (quarter box), 0.33 (third box).",
+    "saving": "Saving…",
+    "changeAction": "← Change action",
+    "loading": "Loading…",
+    "invalidQty": "Invalid quantity",
+    "saveFailed": "Save failed",
+    "genericError": "Error",
+    "productNotFound": "Product not found"
+  },
+  "NumPad": {
+    "decimal": "Decimal point",
+    "backspace": "Backspace"
+  },
   "History": {
+    "eyebrow": "Transaction log",
     "title": "History",
-    "noTransactions": "No transactions yet"
+    "subtitle": "Recent movements, grouped by day and shift.",
+    "all": "All",
+    "noTransactions": "No transactions yet.",
+    "shifts": {
+      "morning": "Morning",
+      "afternoon": "Afternoon",
+      "evening": "Evening"
+    },
+    "shiftShort": {
+      "morning": "AM",
+      "afternoon": "PM",
+      "evening": "EVE"
+    },
+    "shiftSuffix": "shift",
+    "entry": "{count, plural, one {# entry} other {# entries}}",
+    "stockIn": "Stock in",
+    "stockOut": "Stock out"
   },
   "Reorder": {
+    "eyebrow": "Restock",
     "title": "Reorder",
-    "noItems": "All items are above threshold"
+    "subtitle": "Items below their minimum threshold.",
+    "allAbove": "All items are above threshold",
+    "noRestock": "No restock needed right now.",
+    "order": "Order",
+    "printList": "Print list"
   },
   "Reports": {
-    "title": "Reports"
+    "eyebrow": "Last 30 days",
+    "title": "Reports",
+    "subtitle": "In/out, with depletion forecast.",
+    "loading": "Loading…",
+    "noData": "No data yet.",
+    "in": "In",
+    "out": "Out",
+    "onHand": "On hand",
+    "last14Out": "Last 14 days, out",
+    "dailyAvg": "Daily avg:",
+    "runOutToday": "Will run out today.",
+    "daysLeft": "Estimated {days} days of stock left.",
+    "runOutAria": "Will run out today",
+    "urg": "URG"
   },
   "Add": {
     "title": "Add Product",
     "eyebrow": "New item",
+    "subtitle": "New items appear on the Stock screen.",
     "nameLabel": "Name",
     "namePlaceholder": "e.g. Onion, Lemon, Garlic",
     "unitLabel": "Unit",

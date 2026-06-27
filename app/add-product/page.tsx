@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export default function AddProductPage() {
+  const t = useTranslations('Add');
+  const tError = useTranslations('Stock');
   const router = useRouter();
   const [name, setName] = useState('');
   const [unit, setUnit] = useState('box');
@@ -14,7 +17,7 @@ export default function AddProductPage() {
   const submit = async () => {
     setError(null);
     if (!name.trim()) {
-      setError('Product name required.');
+      setError(t('errorName'));
       return;
     }
     setSubmitting(true);
@@ -30,13 +33,13 @@ export default function AddProductPage() {
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));
-        throw new Error(d.error || 'Could not save product.');
+        throw new Error(d.error || t('errorSave'));
       }
       if (navigator.vibrate) navigator.vibrate(50);
       router.push('/');
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
+      setError(e instanceof Error ? e.message : tError('errorPrefix'));
     } finally {
       setSubmitting(false);
     }
@@ -45,10 +48,10 @@ export default function AddProductPage() {
   return (
     <div className="space-y-7">
       <header>
-        <div className="eyebrow">New item</div>
-        <h1 className="h-display mt-1">Add Product</h1>
+        <div className="eyebrow">{t('eyebrow')}</div>
+        <h1 className="h-display mt-1">{t('title')}</h1>
         <p style={{ color: 'var(--ink-500)', marginTop: 6, fontSize: '1rem' }}>
-          New items appear on the Stock screen.
+          {t('subtitle')}
         </p>
       </header>
 
@@ -59,13 +62,13 @@ export default function AddProductPage() {
             className="eyebrow"
             style={{ display: 'block', marginBottom: 8 }}
           >
-            Name
+            {t('nameLabel')}
           </label>
           <input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Onion, Lemon, Garlic"
+            placeholder={t('namePlaceholder')}
             className="input-field"
             style={{ fontSize: '1.5rem' }}
           />
@@ -77,7 +80,7 @@ export default function AddProductPage() {
             className="eyebrow"
             style={{ display: 'block', marginBottom: 8 }}
           >
-            Unit
+            {t('unitLabel')}
           </label>
           <input
             id="unit"
@@ -94,7 +97,7 @@ export default function AddProductPage() {
             className="eyebrow"
             style={{ display: 'block', marginBottom: 8 }}
           >
-            Minimum threshold
+            {t('thresholdLabel')}
           </label>
           <input
             id="threshold"
@@ -108,7 +111,7 @@ export default function AddProductPage() {
             style={{ fontSize: '1.5rem' }}
           />
           <p style={{ color: 'var(--ink-500)', fontSize: '0.85rem', marginTop: 6 }}>
-            When stock drops below this value, the product appears in Reorder.
+            {t('thresholdHelp')}
           </p>
         </div>
 
@@ -146,7 +149,7 @@ export default function AddProductPage() {
           >
             ✓
           </span>
-          {submitting ? 'Saving…' : 'Save product'}
+          {submitting ? t('saving') : t('save')}
         </button>
 
         <button
@@ -154,7 +157,7 @@ export default function AddProductPage() {
           className="btn-ghost w-full"
           style={{ fontSize: '1rem' }}
         >
-          Cancel
+          {t('cancel')}
         </button>
       </div>
     </div>

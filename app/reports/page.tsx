@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { ReportSummary } from '@/lib/types';
 
 function Sparkline({ values, max }: { values: number[]; max: number }) {
+  const t = useTranslations('Reports');
   const w = 320, h = 60;
   if (!values.length || max === 0) {
     return (
@@ -11,7 +13,7 @@ function Sparkline({ values, max }: { values: number[]; max: number }) {
         className="flex items-center"
         style={{ height: 60, color: 'var(--ink-500)', fontSize: '0.85rem' }}
       >
-        No data yet.
+        {t('noData')}
       </div>
     );
   }
@@ -52,6 +54,7 @@ function Sparkline({ values, max }: { values: number[]; max: number }) {
 }
 
 export default function ReportsPage() {
+  const t = useTranslations('Reports');
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [daily, setDaily] = useState<Record<string, number[]>>({});
 
@@ -94,15 +97,15 @@ export default function ReportsPage() {
   return (
     <div className="space-y-7">
       <header>
-        <div className="eyebrow">Last 30 days</div>
-        <h1 className="h-display mt-1">Reports</h1>
+        <div className="eyebrow">{t('eyebrow')}</div>
+        <h1 className="h-display mt-1">{t('title')}</h1>
         <p style={{ color: 'var(--ink-500)', marginTop: 6, fontSize: '1rem' }}>
-          In/out, with depletion forecast.
+          {t('subtitle')}
         </p>
       </header>
 
       {reports.length === 0 && (
-        <div style={{ color: 'var(--ink-500)' }}>Loading…</div>
+        <div style={{ color: 'var(--ink-500)' }}>{t('loading')}</div>
       )}
 
       {reports.map((r) => {
@@ -123,17 +126,17 @@ export default function ReportsPage() {
               {willRunOut && r.days_until_empty! < 1 && (
                 <span
                   className="hanko hanko-ink"
-                  aria-label="Will run out today"
+                  aria-label={t('runOutAria')}
                   style={{ width: '2rem', height: '2rem', fontSize: '1rem' }}
                 >
-                  URG
+                  {t('urg')}
                 </span>
               )}
             </header>
 
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <div className="eyebrow">In</div>
+                <div className="eyebrow">{t('in')}</div>
                 <div
                   className="num"
                   style={{
@@ -147,7 +150,7 @@ export default function ReportsPage() {
                 </div>
               </div>
               <div>
-                <div className="eyebrow">Out</div>
+                <div className="eyebrow">{t('out')}</div>
                 <div
                   className="num"
                   style={{
@@ -161,7 +164,7 @@ export default function ReportsPage() {
                 </div>
               </div>
               <div>
-                <div className="eyebrow">On hand</div>
+                <div className="eyebrow">{t('onHand')}</div>
                 <div
                   className="num"
                   style={{
@@ -178,9 +181,9 @@ export default function ReportsPage() {
 
             <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--paper-200)' }}>
               <div className="flex justify-between mb-3">
-                <span className="eyebrow">Last 14 days, out</span>
+                <span className="eyebrow">{t('last14Out')}</span>
                 <span style={{ color: 'var(--ink-700)', fontSize: '0.9rem' }}>
-                  Daily avg:{' '}
+                  {t('dailyAvg')}{' '}
                   <span className="num" style={{ fontWeight: 600, color: 'var(--ink-900)' }}>
                     {r.daily_avg_30d.toFixed(2)}
                   </span>
@@ -197,8 +200,8 @@ export default function ReportsPage() {
                   }}
                 >
                   {r.days_until_empty! < 1
-                    ? 'Will run out today.'
-                    : `Estimated ${r.days_until_empty!.toFixed(1)} days of stock left.`}
+                    ? t('runOutToday')
+                    : t('daysLeft', { days: r.days_until_empty!.toFixed(1) })}
                 </p>
               )}
             </div>

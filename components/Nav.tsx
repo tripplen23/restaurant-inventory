@@ -25,6 +25,7 @@ export function Nav() {
   const locale = useLocale() as Locale;
   const tBrand = useTranslations('Nav');
   const tTabs = useTranslations('Tabs');
+  const tToggle = useTranslations('Toggle');
   const [pending, startTransition] = useTransition();
   const [switchingTo, setSwitchingTo] = useState<Locale | null>(null);
 
@@ -52,7 +53,7 @@ export function Nav() {
     >
       <div className="mx-auto max-w-5xl px-6 pt-5 pb-4 flex items-center gap-3">
         {/* Brand mark — hanko */}
-        <div className="hanko" aria-label="Kitchen Stock">KS</div>
+        <div className="hanko" aria-label={tBrand('brand')}>KS</div>
         <div className="flex-1 min-w-0">
           <div
             style={{
@@ -74,7 +75,7 @@ export function Nav() {
         {/* Locale toggle */}
         <div
           role="group"
-          aria-label="Language"
+          aria-label={tToggle('label')}
           className="flex items-center"
           style={{
             background: 'var(--paper-100)',
@@ -118,7 +119,7 @@ export function Nav() {
       {/* Tab bar */}
       <nav
         className="nav-tab-list mx-auto max-w-5xl px-3"
-        aria-label="Primary"
+        aria-label={tTabs('primary')}
       >
         {TABS.map((t) => {
           const active = pathname === t.href;

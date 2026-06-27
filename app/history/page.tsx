@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 
 type TxRow = {
   id: string;
@@ -14,15 +15,21 @@ type TxRow = {
 };
 
 type Group = {
-  label: string;
+  shift: 'morning' | 'afternoon' | 'evening';
   rows: TxRow[];
 };
 
-function shiftOf(ts: number): 'Morning' | 'Afternoon' | 'Evening' {
+const SHIFT_KEYS: Array<'morning' | 'afternoon' | 'evening'> = [
+  'morning',
+  'afternoon',
+  'evening',
+];
+
+function shiftOf(ts: number): 'morning' | 'afternoon' | 'evening' {
   const h = new Date(ts).getHours();
-  if (h < 12) return 'Morning';
-  if (h < 18) return 'Afternoon';
-  return 'Evening';
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }
 
 function dayKey(ts: number): string {
@@ -30,12 +37,9 @@ function dayKey(ts: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-function formatDay(d: string): string {
-  const date = new Date(d + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
 export default function HistoryPage() {
+  const t = useTranslations('History');
+  const locale = useLocale();
   const [rows, setRows] = useState<TxRow[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [days, setDays] = useState<string[]>([]);
@@ -58,17 +62,29 @@ export default function HistoryPage() {
     const k = shiftOf(r.timestamp);
     (groups[k] = groups[k] || []).push(r);
   }
-  const orderedGroups: Group[] = (['Morning', 'Afternoon', 'Evening'] as const)
+  const orderedGroups: Group[] = SHIFT_KEYS
     .filter((s) => groups[s]?.length)
-    .map((s) => ({ label: s, rows: groups[s] }));
+    .map((s) => ({ shift: s, rows: groups[s] }));
+
+  // Locale-aware date formatters (en-US vs zh-CN)
+  const dateFormatter = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  const timeFormatter = new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: locale === 'zh' ? false : true,
+  });
 
   return (
     <div className="space-y-7">
       <header>
-        <div className="eyebrow">Transaction log</div>
-        <h1 className="h-display mt-1">History</h1>
+        <div className="eyebrow">{t('eyebrow')}</div>
+        <h1 className="h-display mt-1">{t('title')}</h1>
         <p style={{ color: 'var(--ink-500)', marginTop: 6, fontSize: '1rem' }}>
-          Recent movements, grouped by day and shift.
+          {t('subtitle')}
         </p>
       </header>
 
@@ -88,7 +104,7 @@ export default function HistoryPage() {
             whiteSpace: 'nowrap',
           }}
         >
-          All
+          {t('all')}
         </button>
         {days.map((d) => {
           const active = filter === d;
@@ -108,7 +124,7 @@ export default function HistoryPage() {
                 whiteSpace: 'nowrap',
               }}
             >
-              {formatDay(d)}
+              {dateFormatter.format(new Date(d + 'T00:00:00'))}
             </button>
           );
         })}
@@ -119,12 +135,12 @@ export default function HistoryPage() {
           className="card text-center py-10"
           style={{ color: 'var(--ink-500)' }}
         >
-          No transactions yet.
+          {t('noTransactions')}
         </div>
       )}
 
       {orderedGroups.map((g) => (
-        <section key={g.label}>
+        <section key={g.shift}>
           <div
             className="flex items-center gap-3 pb-3"
             style={{ borderBottom: '1px solid var(--paper-200)' }}
@@ -134,11 +150,13 @@ export default function HistoryPage() {
               aria-hidden
               style={{ width: '1.75rem', height: '1.75rem', fontSize: '0.85rem' }}
             >
-              {g.label === 'Morning' ? 'AM' : g.label === 'Afternoon' ? 'PM' : 'EVE'}
+              {t(`shiftShort.${g.shift}`)}
             </span>
-            <span className="h-section">{g.label} shift</span>
+            <span className="h-section">
+              {t(`shifts.${g.shift}`)} {t('shiftSuffix')}
+            </span>
             <span className="eyebrow" style={{ marginLeft: 'auto' }}>
-              {g.rows.length} {g.rows.length === 1 ? 'entry' : 'entries'}
+              {t('entry', { count: g.rows.length })}
             </span>
           </div>
 
@@ -153,7 +171,7 @@ export default function HistoryPage() {
                 >
                   <span
                     className={`hanko ${inTx ? '' : 'hanko-ink'}`}
-                    aria-label={inTx ? 'Stock in' : 'Stock out'}
+                    aria-label={inTx ? t('stockIn') : t('stockOut')}
                     style={{ width: '2.25rem', height: '2.25rem', fontSize: '1.1rem' }}
                   >
                     {inTx ? '+' : '−'}
@@ -170,10 +188,7 @@ export default function HistoryPage() {
                       {r.product_name.split(' (')[0]}
                     </div>
                     <div style={{ color: 'var(--ink-500)', fontSize: '0.85rem', marginTop: 2 }}>
-                      {new Date(r.timestamp).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {timeFormatter.format(new Date(r.timestamp))}
                       {r.note ? ` · ${r.note}` : ''}
                     </div>
                   </div>
