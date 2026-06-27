@@ -111,7 +111,7 @@
       "afternoon": "午",
       "evening": "晚"
     },
-    "shiftSuffix": "班",
+    "shiftLabel": "{shift}",
     "entry": "{count, plural, other {# 笔记录}}",
     "stockIn": "入库",
     "stockOut": "出库"

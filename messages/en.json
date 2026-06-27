@@ -111,7 +111,7 @@
       "afternoon": "PM",
       "evening": "EVE"
     },
-    "shiftSuffix": "shift",
+    "shiftLabel": "{shift} shift",
     "entry": "{count, plural, one {# entry} other {# entries}}",
     "stockIn": "Stock in",
     "stockOut": "Stock out"

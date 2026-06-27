@@ -153,7 +153,7 @@ export default function HistoryPage() {
               {t(`shiftShort.${g.shift}`)}
             </span>
             <span className="h-section">
-              {t(`shifts.${g.shift}`)} {t('shiftSuffix')}
+              {t('shiftLabel', { shift: t(`shifts.${g.shift}`) })}
             </span>
             <span className="eyebrow" style={{ marginLeft: 'auto' }}>
               {t('entry', { count: g.rows.length })}
