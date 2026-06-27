@@ -268,31 +268,97 @@
 }
 
 /* ===========================================================================
-   Responsive — stock grid (5 columns) scales from mobile to iPad/desktop
+   Responsive — stock card (2-row kiosk on mobile, 5-col grid on iPad+)
    =========================================================================== */
 
-.stock-grid {
-  display: grid;
-  /* Mobile (default): product + 2 inputs + on-hand collapse to 1fr auto auto auto auto */
-  grid-template-columns: minmax(0, 1fr) 70px 70px 80px 72px;
-  align-items: center;
+/* The product card is a flexbox column with 2 rows:
+     .card-top  = product name + on-hand + (desktop-only) edit/delete
+     .card-bottom = input row (1 input + 1 action button per direction)
+   On iPad+ (>=768px) it falls back to the original 5-column grid. */
+.product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-@media (min-width: 480px) {
-  .stock-grid {
-    grid-template-columns: minmax(0, 1fr) 84px 84px 100px 84px;
+.card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-bottom {
+  display: grid;
+  /* Mobile: input + action button per direction, two side-by-side blocks */
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.qty-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.qty-wrapper input.qty-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Inline action button — mobile only by default */
+.qty-action {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .card-actions-desktop { display: none; }
+  .qty-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-shrink: 0;
+    min-width: 80px;
+    min-height: 56px;
+    border: none;
+    border-radius: 6;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 120ms ease, background-color 200ms ease;
+    padding: 0 10px;
   }
+  .qty-action:active { transform: translateY(1px) scale(0.98); }
+  .qty-action:disabled { cursor: not-allowed; }
+  .qty-action span[aria-hidden] {
+    font-size: 1.5rem;
+    line-height: 1;
+    font-weight: 500;
+  }
+  .qty-action-label { font-size: 0.8rem; }
 }
 
 @media (min-width: 768px) {
-  .stock-grid {
+  /* On iPad+ restore the original 5-column grid layout */
+  .product-card {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) 100px 100px 110px 88px;
+    align-items: center;
+    gap: 8px;
   }
+  .card-top { display: contents; }
+  .card-bottom { display: contents; }
+  .card-actions-desktop { display: flex; gap: 6px; justify-content: flex-end; }
+  .qty-wrapper { display: block; }
+  .qty-action { display: none !important; }
 }
 
-/* Mobile product name — smaller font so it fits */
-.stock-grid .product-name {
-  font-size: 1.1rem;
+/* Product name — readable on all sizes */
+.product-card .product-name {
+  font-size: 1.15rem;
   font-weight: 600;
   line-height: 1.2;
   color: var(--ink-900);
@@ -300,35 +366,58 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 @media (min-width: 480px) {
-  .stock-grid .product-name {
-    font-size: 1.25rem;
-  }
+  .product-card .product-name { font-size: 1.25rem; }
 }
-
 @media (min-width: 768px) {
-  .stock-grid .product-name {
-    font-size: 1.4rem;
-  }
+  .product-card .product-name { font-size: 1.4rem; }
 }
 
-.stock-grid .on-hand-num {
+/* On-hand number — same scale */
+.product-card .on-hand-num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   line-height: 1.1;
   text-align: right;
 }
-
 @media (min-width: 480px) {
-  .stock-grid .on-hand-num { font-size: 1.25rem; }
+  .product-card .on-hand-num { font-size: 1.3rem; }
+}
+@media (min-width: 768px) {
+  .product-card .on-hand-num { font-size: 1.4rem; }
+}
+
+/* Mobile qty input — slightly larger so it's not crowded by the action button */
+@media (max-width: 767px) {
+  .qty-wrapper input.qty-input {
+    font-size: 1.1rem;
+    height: 56px;
+    padding: 0 8px;
+  }
+}
+
+/* Header row — collapse to a single label line on mobile */
+.stock-list-header {
+  display: none;
 }
 
 @media (min-width: 768px) {
-  .stock-grid .on-hand-num { font-size: 1.4rem; }
+  .stock-list-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 100px 100px 110px 88px;
+    align-items: center;
+    gap: 8px;
+    color: var(--ink-500);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--paper-200);
+  }
 }
 
 /* Nav tabs: keep 56px on all sizes, but allow horizontal scroll on very narrow */
@@ -354,14 +443,5 @@
   .layout-main {
     padding-left: 12px !important;
     padding-right: 12px !important;
-  }
-  .qty-input {
-    font-size: 1rem !important;
-    height: 48px !important;
-    padding: 0 4px !important;
-  }
-  .stock-grid {
-    grid-template-columns: minmax(0, 1fr) 60px 60px 70px 64px;
-    gap: 6px !important;
   }
 }

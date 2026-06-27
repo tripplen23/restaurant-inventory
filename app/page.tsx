@@ -144,15 +144,7 @@ export default function HomePage() {
 
       {/* Stock list — inline Out/In inputs + Edit/Delete */}
       <section>
-        <div
-          className="stock-grid items-center gap-2 pb-2"
-          style={{
-            color: 'var(--ink-500)',
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            borderBottom: '1px solid var(--paper-200)',
-          }}
-        >
+        <div className="stock-list-header">
           <div>{t('colProduct')}</div>
           <div className="text-center" style={{ color: 'var(--jade)' }}>{t('colIn')}</div>
           <div className="text-center" style={{ color: 'var(--cinnabar)' }}>{t('colOut')}</div>
@@ -395,81 +387,88 @@ function ProductRow({
 
   return (
     <li
-      className="stock-grid items-center gap-2 py-3"
+      className="product-card"
       style={{
         borderBottom: '1px solid var(--paper-200)',
+        padding: '12px 0',
       }}
     >
-      <div className="min-w-0 pr-2">
-        <div className="product-name">
-          {product.name.split(' (')[0]}
+      {/* Top: product name + on-hand (always visible) */}
+      <div className="card-top">
+        <div className="min-w-0 flex-1">
+          <div className="product-name">
+            {product.name.split(' (')[0]}
+          </div>
+          <div className="mt-1.5">
+            <StockBadge
+              level={level}
+              stock={product.current_stock}
+              threshold={product.threshold}
+            />
+          </div>
         </div>
-        <div className="mt-1.5">
-          <StockBadge
-            level={level}
-            stock={product.current_stock}
-            threshold={product.threshold}
-          />
+
+        <div className="text-right" style={{ flexShrink: 0, marginLeft: 12 }}>
+          <div
+            className="on-hand-num"
+            style={{
+              color: level === 'ok' ? 'var(--ink-900)' : 'var(--cinnabar)',
+            }}
+          >
+            {product.current_stock.toFixed(2)}
+          </div>
+          <div className="eyebrow">{product.unit}</div>
+        </div>
+
+        <div className="card-actions-desktop" style={{ flexShrink: 0, marginLeft: 8 }}>
+          <IconButton
+            onClick={() => onEdit(product)}
+            aria-label={`Edit ${product.name}`}
+            title="Edit"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+            </svg>
+          </IconButton>
+          <IconButton
+            onClick={() => onDelete(product)}
+            aria-label={`Delete ${product.name}`}
+            title="Delete"
+            tone="danger"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6" />
+              <path d="M14 11v6" />
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+            </svg>
+          </IconButton>
         </div>
       </div>
 
-      <QtyInput
-        value={inVal}
-        onChange={setInVal}
-        onKeyDown={(e) => handleKey(e, 'in', inVal, setInVal)}
-        onBlur={() => handleBlur('in', inVal)}
-        tone="jade"
-        placeholder="0"
-      />
+      {/* Bottom: input + 2 action buttons (mobile=kiosk, desktop=compact columns) */}
+      <div className="card-bottom">
+        <QtyInput
+          value={inVal}
+          onChange={setInVal}
+          onKeyDown={(e) => handleKey(e, 'in', inVal, setInVal)}
+          onBlur={() => handleBlur('in', inVal)}
+          tone="jade"
+          placeholder="0"
+          column="in"
+        />
 
-      <QtyInput
-        value={outVal}
-        onChange={setOutVal}
-        onKeyDown={(e) => handleKey(e, 'out', outVal, setOutVal)}
-        onBlur={() => handleBlur('out', outVal)}
-        tone="cinnabar"
-        placeholder="0"
-      />
-
-      <div className="text-right">
-        <div
-          className="on-hand-num"
-          style={{
-            color: level === 'ok' ? 'var(--ink-900)' : 'var(--cinnabar)',
-          }}
-        >
-          {product.current_stock.toFixed(2)}
-        </div>
-        <div className="eyebrow">{product.unit}</div>
-      </div>
-
-      <div className="flex gap-1.5 justify-end">
-        <IconButton
-          onClick={() => onEdit(product)}
-          aria-label={`Edit ${product.name}`}
-          title="Edit"
-        >
-          {/* pencil */}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M12 20h9" />
-            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-          </svg>
-        </IconButton>
-        <IconButton
-          onClick={() => onDelete(product)}
-          aria-label={`Delete ${product.name}`}
-          title="Delete"
-          tone="danger"
-        >
-          {/* trash */}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-            <path d="M10 11v6" />
-            <path d="M14 11v6" />
-            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-          </svg>
-        </IconButton>
+        <QtyInput
+          value={outVal}
+          onChange={setOutVal}
+          onKeyDown={(e) => handleKey(e, 'out', outVal, setOutVal)}
+          onBlur={() => handleBlur('out', outVal)}
+          tone="cinnabar"
+          placeholder="0"
+          column="out"
+        />
       </div>
 
       {err && (
@@ -496,6 +495,7 @@ function QtyInput({
   onBlur,
   tone,
   placeholder,
+  column,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -503,10 +503,14 @@ function QtyInput({
   onBlur: () => void;
   tone: 'jade' | 'cinnabar';
   placeholder: string;
+  column?: 'in' | 'out';
 }) {
   const accent = tone === 'jade' ? 'var(--jade)' : 'var(--cinnabar)';
+  const isIn = column === 'in';
+  const isOut = column === 'out';
+
   return (
-    <div className="relative">
+    <div className="qty-wrapper" data-column={column}>
       <input
         type="text"
         inputMode="decimal"
@@ -532,9 +536,54 @@ function QtyInput({
           e.currentTarget.style.borderColor = accent;
           e.currentTarget.select();
         }}
-        aria-label="Quantity"
+        aria-label={isIn ? 'Stock in quantity' : isOut ? 'Stock out quantity' : 'Quantity'}
+      />
+      {/* Mobile-only inline action button — opens the confirm modal directly */}
+      <ActionButton
+        tone={tone}
+        type={isIn ? 'in' : isOut ? 'out' : null}
+        hasValue={value.trim().length > 0}
+        onConfirm={() => onKeyDown({ key: 'Enter', preventDefault: () => {} } as React.KeyboardEvent<HTMLInputElement>)}
       />
     </div>
+  );
+}
+
+/** Mobile-only shortcut button. Renders a large + or − beside the input so
+ *  the cook can tap once to confirm, instead of hunt for the on-screen keyboard. */
+function ActionButton({
+  tone,
+  type,
+  hasValue,
+  onConfirm,
+}: {
+  tone: 'jade' | 'cinnabar';
+  type: 'in' | 'out' | null;
+  hasValue: boolean;
+  onConfirm: () => void;
+}) {
+  if (!type) return null;
+  const accent = tone === 'jade' ? 'var(--jade)' : 'var(--cinnabar)';
+  const char = type === 'in' ? '+' : '−';
+  const aria = type === 'in' ? 'Confirm stock in' : 'Confirm stock out';
+  return (
+    <button
+      type="button"
+      className="qty-action"
+      onClick={onConfirm}
+      disabled={!hasValue}
+      aria-label={aria}
+      style={{
+        background: hasValue ? accent : 'var(--paper-100)',
+        color: hasValue ? 'var(--paper-50)' : 'var(--ink-500)',
+        boxShadow: hasValue
+          ? (type === 'in' ? '0 2px 0 #3a533a' : '0 2px 0 var(--cinnabar-deep)')
+          : 'none',
+      }}
+    >
+      <span aria-hidden>{char}</span>
+      <span className="qty-action-label">{type === 'in' ? 'In' : 'Out'}</span>
+    </button>
   );
 }
 
