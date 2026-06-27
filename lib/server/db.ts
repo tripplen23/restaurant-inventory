@@ -1,72 +1,120 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { createClient, type Client, type InValue } from '@libsql/client';
+import * as path from 'path';
+import * as fs from 'fs';
 import { seedIfEmpty } from './seed';
 
-// DB file nằm cạnh project root, tránh bị Next.js xoá khi build
-const DB_DIR = path.join(process.cwd(), '.data');
-const DB_PATH = path.join(DB_DIR, 'inventory.db');
+// ─────────────────────────────────────────────────────────────────────────────
+// Database adapter: Turso (prod) OR libSQL embedded file (dev / fallback)
+//
+// Connection priority:
+//   1. TURSO_DATABASE_URL + TURSO_AUTH_TOKEN  → connect to Turso cloud
+//   2. None of the above                      → embedded file at .data/inventory.db
+//
+// All queries go through `db.execute({ sql, args })` which is async — works
+// for both backends. The rest of the codebase never touches better-sqlite3.
+// ─────────────────────────────────────────────────────────────────────────────
 
-if (!fs.existsSync(DB_DIR)) {
+const TURSO_URL = process.env.TURSO_DATABASE_URL;
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+const DB_DIR = path.join(process.cwd(), '.data');
+const LOCAL_FILE = path.join(DB_DIR, 'inventory.db');
+
+// Ensure local file directory exists (only used in fallback mode)
+if (!TURSO_URL && !fs.existsSync(DB_DIR)) {
   fs.mkdirSync(DB_DIR, { recursive: true });
 }
 
-// Singleton pattern: Next.js dev mode hot-reload, tránh tạo nhiều connection
+const url = TURSO_URL ?? `file:${LOCAL_FILE}`;
+
 declare global {
   // eslint-disable-next-line no-var
-  var __db: Database.Database | undefined;
+  var __db: Client | undefined;
+  // eslint-disable-next-line no-var
+  var __dbReady: Promise<void> | undefined;
 }
 
-function getDb(): Database.Database {
-  if (global.__db) return global.__db;
-
-  const db = new Database(DB_PATH);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS products (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE,
-      unit TEXT NOT NULL,
-      threshold REAL NOT NULL,
-      created_at INTEGER NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS transactions (
-      id TEXT PRIMARY KEY,
-      product_id TEXT NOT NULL,
-      type TEXT NOT NULL CHECK (type IN ('in', 'out')),
-      quantity REAL NOT NULL,
-      timestamp INTEGER NOT NULL,
-      note TEXT,
-      FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_tx_product_time
-      ON transactions(product_id, timestamp);
-  `);
-
-  // View tính tồn kho current (sum in - sum out)
-  db.exec(`
-    CREATE VIEW IF NOT EXISTS v_product_stock AS
-      SELECT
-        p.id,
-        p.name,
-        p.unit,
-        p.threshold,
-        p.created_at,
-        COALESCE(SUM(CASE WHEN t.type = 'in'  THEN t.quantity ELSE 0 END), 0)
-        - COALESCE(SUM(CASE WHEN t.type = 'out' THEN t.quantity ELSE 0 END), 0)
-          AS current_stock
-      FROM products p
-      LEFT JOIN transactions t ON t.product_id = p.id
-      GROUP BY p.id;
-  `);
-
-  seedIfEmpty(db);
-  global.__db = db;
-  return db;
+function createDb(): Client {
+  return createClient({
+    url,
+    authToken: TURSO_TOKEN,
+  });
 }
 
-export const db = getDb();
+/**
+ * Returns the singleton libSQL/Turso client.
+ * Auto-runs schema migration + seed on first use.
+ */
+export async function getDb(): Promise<Client> {
+  if (!global.__db) {
+    global.__db = createDb();
+  }
+  if (!global.__dbReady) {
+    global.__dbReady = initSchema(global.__db).then(() => seedIfEmpty(global.__db!));
+  }
+  await global.__dbReady;
+  return global.__db;
+}
+
+async function initSchema(client: Client): Promise<void> {
+  const schemaPath = path.join(process.cwd(), 'lib', 'server', 'schema.sql');
+  const sql = fs.readFileSync(schemaPath, 'utf-8');
+  // Split on `;` followed by newline (naive but works for our schema).
+  const statements = sql
+    .split(/;\s*\n/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  for (const stmt of statements) {
+    try {
+      await client.execute(stmt);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Skip "already exists" / "no such table" noise during view re-creates.
+      if (!/already exists|no such table/i.test(msg)) {
+        if (!/view/i.test(msg)) throw e;
+      }
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Convenience wrappers — mirror the better-sqlite3 API shape we used to have
+// so existing call sites read naturally:
+//
+//   const rows = await dbAll<Product>('SELECT * FROM products WHERE id = ?', [id]);
+//   const row  = await dbFirst<Product>('SELECT * FROM products WHERE id = ?', [id]);
+//   const { rowsAffected } = await dbRun('DELETE FROM products WHERE id = ?', [id]);
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Row = Record<string, unknown>;
+
+export async function dbAll<T = Row>(
+  sql: string,
+  args: InValue[] = []
+): Promise<T[]> {
+  const client = await getDb();
+  const r = await client.execute({ sql, args });
+  return r.rows as unknown as T[];
+}
+
+export async function dbFirst<T = Row>(
+  sql: string,
+  args: InValue[] = []
+): Promise<T | undefined> {
+  const rows = await dbAll<T>(sql, args);
+  return rows[0];
+}
+
+export async function dbRun(
+  sql: string,
+  args: InValue[] = []
+): Promise<{ rowsAffected: number }> {
+  const client = await getDb();
+  const r = await client.execute({ sql, args });
+  return { rowsAffected: Number(r.rowsAffected ?? 0) };
+}
+
+// Runtime info (useful for /api/health and debugging)
+export const dbInfo = {
+  mode: TURSO_URL ? 'turso' : 'local-file',
+  url: TURSO_URL ? TURSO_URL.replace(/\/\/.*@/, '//***@') : `file:${LOCAL_FILE}`,
+};

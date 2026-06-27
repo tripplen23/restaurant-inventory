@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/server/db';
+import { dbAll, dbFirst, dbRun } from '@/lib/server/db';
 import type { Product } from '@/lib/types';
 
 function uuid(): string {
@@ -11,9 +11,7 @@ function uuid(): string {
 }
 
 export async function GET() {
-  const rows = db
-    .prepare('SELECT * FROM v_product_stock ORDER BY name')
-    .all() as Product[];
+  const rows = await dbAll<Product>('SELECT * FROM v_product_stock ORDER BY name');
   return NextResponse.json({ products: rows });
 }
 
@@ -27,17 +25,21 @@ export async function POST(req: NextRequest) {
 
   const id = uuid();
   try {
-    db.prepare(
-      'INSERT INTO products (id, name, unit, threshold, created_at) VALUES (?, ?, ?, ?, ?)'
-    ).run(id, body.name.trim(), unit, threshold, Date.now());
+    await dbRun(
+      'INSERT INTO products (id, name, unit, threshold, created_at) VALUES (?, ?, ?, ?, ?)',
+      [id, body.name.trim(), unit, threshold, Date.now()]
+    );
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : 'unknown error';
-    if (msg.includes('UNIQUE')) {
+    if (msg.includes('UNIQUE') || msg.includes('already exists')) {
       return NextResponse.json({ error: 'Product name already exists' }, { status: 409 });
     }
     throw e;
   }
 
-  const product = db.prepare('SELECT * FROM v_product_stock WHERE id = ?').get(id);
+  const product = await dbFirst<Product>(
+    'SELECT * FROM v_product_stock WHERE id = ?',
+    [id]
+  );
   return NextResponse.json({ product }, { status: 201 });
 }

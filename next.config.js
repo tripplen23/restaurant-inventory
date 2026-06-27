@@ -4,9 +4,7 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['better-sqlite3'],
-  },
+  // libSQL (@libsql/client) is pure-JS — no native bindings, no externals needed
 };
 
 module.exports = withNextIntl(nextConfig);

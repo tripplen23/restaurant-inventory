@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/server/db';
+import { dbAll, dbFirst, dbRun } from '@/lib/server/db';
 import type { Transaction, TransactionType } from '@/lib/types';
 
 function uuid(): string {
@@ -12,10 +12,12 @@ function uuid(): string {
 
 type ListQuery = {
   productId?: string;
-  from?: string; // ISO
+  from?: string;
   to?: string;
   limit?: string;
 };
+
+type TxRow = Transaction & { product_name: string; product_unit: string };
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -34,16 +36,15 @@ export async function GET(req: NextRequest) {
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
   const limit = Math.min(Number(q.limit) || 500, 2000);
 
-  const rows = db
-    .prepare(
-      `SELECT t.*, p.name AS product_name, p.unit AS product_unit
-       FROM transactions t
-       JOIN products p ON p.id = t.product_id
-       ${whereSql}
-       ORDER BY t.timestamp DESC
-       LIMIT ?`
-    )
-    .all(...params, limit);
+  const rows = await dbAll<TxRow>(
+    `SELECT t.*, p.name AS product_name, p.unit AS product_unit
+     FROM transactions t
+     JOIN products p ON p.id = t.product_id
+     ${whereSql}
+     ORDER BY t.timestamp DESC
+     LIMIT ?`,
+    [...params, limit]
+  );
   return NextResponse.json({ transactions: rows });
 }
 
@@ -60,17 +61,18 @@ export async function POST(req: NextRequest) {
   if (!Number.isFinite(quantity) || quantity <= 0)
     return NextResponse.json({ error: 'quantity must be > 0' }, { status: 400 });
 
-  const product = db.prepare('SELECT id FROM products WHERE id = ?').get(productId);
+  const product = await dbFirst('SELECT id FROM products WHERE id = ?', [productId]);
   if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
 
   const id = uuid();
   const timestamp = Number(body.timestamp) || Date.now();
   const note = typeof body.note === 'string' ? body.note : null;
 
-  db.prepare(
-    'INSERT INTO transactions (id, product_id, type, quantity, timestamp, note) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(id, productId, type, quantity, timestamp, note);
+  await dbRun(
+    'INSERT INTO transactions (id, product_id, type, quantity, timestamp, note) VALUES (?, ?, ?, ?, ?, ?)',
+    [id, productId, type, quantity, timestamp, note]
+  );
 
-  const tx = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id) as Transaction;
+  const tx = await dbFirst<Transaction>('SELECT * FROM transactions WHERE id = ?', [id]);
   return NextResponse.json({ transaction: tx }, { status: 201 });
 }
