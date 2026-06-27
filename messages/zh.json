@@ -61,6 +61,14 @@
     "toastOut": "{name} 出库 {qty} {unit}",
     "toastIn": "{name} 入库 {qty} {unit}"
   },
+  "Confirm": {
+    "titleIn": "确认入库",
+    "titleOut": "确认出库",
+    "bodyIn": "确认入库 {qty} {unit} {name}?",
+    "bodyOut": "确认出库 {qty} {unit} {name}?",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
   "History": {
     "title": "历史记录",
     "noTransactions": "暂无交易记录"

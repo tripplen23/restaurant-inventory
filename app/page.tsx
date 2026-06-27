@@ -14,11 +14,19 @@ type ToastState = {
   tone: 'ink' | 'cinnabar' | 'jade';
 };
 
+type PendingTx = {
+  type: 'in' | 'out';
+  qty: number;
+  product: Product;
+  rowSetter: (v: string) => void;
+};
+
 export default function HomePage() {
   const t = useTranslations('Stock');
   const tEdit = useTranslations('Edit');
   const tDelete = useTranslations('Delete');
   const tTx = useTranslations('Transaction');
+  const tConfirm = useTranslations('Confirm');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +39,9 @@ export default function HomePage() {
 
   // Delete state
   const [deleting, setDeleting] = useState<Product | null>(null);
+
+  // Confirm-transaction state (shown when user types qty + Enter/blur)
+  const [pendingTx, setPendingTx] = useState<PendingTx | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -157,25 +168,9 @@ export default function HomePage() {
               product={p}
               t={t}
               tTx={tTx}
-              onSubmit={async (type, qty) => {
-                const r = await fetch('/api/transactions', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ product_id: p.id, type, quantity: qty }),
-                });
-                if (!r.ok) {
-                  const d = await r.json().catch(() => ({}));
-                  throw new Error(d.error || 'Save failed');
-                }
-                if (navigator.vibrate) navigator.vibrate(40);
-                showToast({
-                  kind: type,
-                  tone: type === 'out' ? 'ink' : 'cinnabar',
-                  text: type === 'out'
-                    ? tTx('toastOut', { qty: qty.toFixed(2), unit: p.unit, name: p.name.split(' (')[0] })
-                    : tTx('toastIn', { qty: qty.toFixed(2), unit: p.unit, name: p.name.split(' (')[0] }),
-                });
-                await load();
+              onRequest={(type, qty, rowSetter) => {
+                // Open confirm modal; row.clearInput() is called only after confirm or cancel
+                setPendingTx({ type, qty, product: p, rowSetter });
               }}
               onEdit={(p) => setEditing(p)}
               onDelete={(p) => setDeleting(p)}
@@ -209,6 +204,63 @@ export default function HomePage() {
             if (navigator.vibrate) navigator.vibrate([20, 30, 60]);
             showToast({ kind: 'delete', tone: 'ink', text: tDelete('deletedToast', { name }) });
             await load();
+          }}
+        />
+      )}
+
+      {/* Confirm transaction modal — shown after user types qty + Enter/blur */}
+      {pendingTx && (
+        <ConfirmTxModal
+          pending={pendingTx}
+          onClose={() => {
+            pendingTx.rowSetter('');
+            setPendingTx(null);
+          }}
+          onConfirm={async () => {
+            const tx = pendingTx;
+            setPendingTx(null);
+            tx.rowSetter(''); // clear input immediately on confirm
+            try {
+              const r = await fetch('/api/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  product_id: tx.product.id,
+                  type: tx.type,
+                  quantity: tx.qty,
+                }),
+              });
+              if (!r.ok) {
+                const d = await r.json().catch(() => ({}));
+                throw new Error(d.error || 'Save failed');
+              }
+              if (navigator.vibrate) navigator.vibrate(40);
+              showToast({
+                kind: tx.type,
+                tone: tx.type === 'out' ? 'ink' : 'cinnabar',
+                text:
+                  tx.type === 'out'
+                    ? tTx('toastOut', {
+                        qty: tx.qty.toFixed(2),
+                        unit: tx.product.unit,
+                        name: tx.product.name.split(' (')[0],
+                      })
+                    : tTx('toastIn', {
+                        qty: tx.qty.toFixed(2),
+                        unit: tx.product.unit,
+                        name: tx.product.name.split(' (')[0],
+                      }),
+              });
+              await load();
+            } catch (e) {
+              // Restore input on error so user can retry
+              tx.rowSetter(String(tx.qty));
+              showToast({
+                kind: tx.type,
+                tone: 'ink',
+                text: e instanceof Error ? e.message : 'Save failed',
+              });
+            }
           }}
         />
       )}
@@ -281,14 +333,14 @@ export default function HomePage() {
 
 function ProductRow({
   product,
-  onSubmit,
+  onRequest,
   onEdit,
   onDelete,
   t,
   tTx,
 }: {
   product: Product;
-  onSubmit: (type: 'in' | 'out', qty: number) => Promise<void>;
+  onRequest: (type: 'in' | 'out', qty: number, rowSetter: (v: string) => void) => void;
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
   t: ReturnType<typeof useTranslations<'Stock'>>;
@@ -296,11 +348,12 @@ function ProductRow({
 }) {
   const [outVal, setOutVal] = useState('');
   const [inVal, setInVal] = useState('');
-  const [busy, setBusy] = useState<'in' | 'out' | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [pulse, setPulse] = useState<{ type: 'in' | 'out'; key: number } | null>(null);
+  // refs to detect double-fire between Enter and blur on the same input
+  const lastOutSubmit = useRef<number>(0);
+  const lastInSubmit = useRef<number>(0);
 
-  const submit = async (type: 'in' | 'out', raw: string) => {
+  const request = (type: 'in' | 'out', raw: string) => {
     const v = raw.trim();
     if (!v) return;
     const n = Number(v);
@@ -309,18 +362,9 @@ function ProductRow({
       return;
     }
     setErr(null);
-    setBusy(type);
-    try {
-      await onSubmit(type, n);
-      if (type === 'in') setInVal('');
-      else setOutVal('');
-      setPulse({ type, key: Date.now() });
-      setTimeout(() => setPulse(null), 700);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setBusy(null);
-    }
+    if (type === 'in') lastInSubmit.current = Date.now();
+    else lastOutSubmit.current = Date.now();
+    onRequest(type, n, type === 'in' ? setInVal : setOutVal);
   };
 
   const handleKey = (
@@ -331,12 +375,21 @@ function ProductRow({
   ) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      submit(type, val);
+      request(type, val);
     } else if (e.key === 'Escape') {
       setter('');
       setErr(null);
       e.currentTarget.blur();
     }
+  };
+
+  const handleBlur = (type: 'in' | 'out', val: string) => {
+    // Skip if this blur is the immediate aftermath of an Enter submit
+    // (Enter does not blur, but a click on another element shortly after
+    // would trigger blur and double-fire). 250ms is enough to debounce.
+    const last = type === 'in' ? lastInSubmit.current : lastOutSubmit.current;
+    if (Date.now() - last < 250) return;
+    if (val.trim()) request(type, val);
   };
 
   const level = classifyStock(product.current_stock, product.threshold, null);
@@ -347,13 +400,6 @@ function ProductRow({
       style={{
         gridTemplateColumns: '1fr 88px 88px 110px 88px',
         borderBottom: '1px solid var(--paper-200)',
-        background:
-          pulse?.type === 'out'
-            ? 'rgba(26, 24, 20, 0.04)'
-            : pulse?.type === 'in'
-            ? 'rgba(181, 55, 31, 0.06)'
-            : 'transparent',
-        transition: 'background-color 600ms ease',
       }}
     >
       <div className="min-w-0 pr-2">
@@ -382,8 +428,7 @@ function ProductRow({
         value={outVal}
         onChange={setOutVal}
         onKeyDown={(e) => handleKey(e, 'out', outVal, setOutVal)}
-        onBlur={() => { if (outVal.trim()) submit('out', outVal); }}
-        busy={busy === 'out'}
+        onBlur={() => handleBlur('out', outVal)}
         tone="ink"
         placeholder="0"
       />
@@ -392,8 +437,7 @@ function ProductRow({
         value={inVal}
         onChange={setInVal}
         onKeyDown={(e) => handleKey(e, 'in', inVal, setInVal)}
-        onBlur={() => { if (inVal.trim()) submit('in', inVal); }}
-        busy={busy === 'in'}
+        onBlur={() => handleBlur('in', inVal)}
         tone="cinnabar"
         placeholder="0"
       />
@@ -464,7 +508,6 @@ function QtyInput({
   onChange,
   onKeyDown,
   onBlur,
-  busy,
   tone,
   placeholder,
 }: {
@@ -472,7 +515,6 @@ function QtyInput({
   onChange: (v: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onBlur: () => void;
-  busy: boolean;
   tone: 'ink' | 'cinnabar';
   placeholder: string;
 }) {
@@ -487,7 +529,6 @@ function QtyInput({
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         placeholder={placeholder}
-        disabled={busy}
         className="num w-full text-center outline-none"
         style={{
           height: 56,
@@ -507,22 +548,6 @@ function QtyInput({
         }}
         aria-label="Quantity"
       />
-      {busy && (
-        <span
-          aria-hidden
-          className="absolute"
-          style={{
-            right: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: accent,
-            opacity: 0.6,
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -787,7 +812,7 @@ function ModalShell({
 }: {
   onClose: () => void;
   title: string;
-  icon: 'edit' | 'danger';
+  icon: 'edit' | 'danger' | 'in' | 'out';
   children: React.ReactNode;
 }) {
   // Close on Escape
@@ -796,6 +821,15 @@ function ModalShell({
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
   }, [onClose]);
+
+  const hankoChar =
+    icon === 'danger' ? '×' :
+    icon === 'in' ? '+' :
+    icon === 'out' ? '−' :
+    '✎';
+  const hankoBg =
+    icon === 'danger' || icon === 'in' ? 'var(--cinnabar)' :
+    'var(--ink-900)';
 
   return (
     <div
@@ -822,13 +856,13 @@ function ModalShell({
             className="hanko"
             aria-hidden
             style={{
-              background: icon === 'danger' ? 'var(--cinnabar)' : 'var(--ink-900)',
+              background: hankoBg,
               width: '2rem',
               height: '2rem',
               fontSize: '1rem',
             }}
           >
-            {icon === 'danger' ? '×' : '✎'}
+            {hankoChar}
           </span>
           <h2
             style={{
@@ -844,5 +878,75 @@ function ModalShell({
         {children}
       </div>
     </div>
+  );
+}
+
+function ConfirmTxModal({
+  pending,
+  onClose,
+  onConfirm,
+}: {
+  pending: PendingTx;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  const t = useTranslations('Confirm');
+  const isIn = pending.type === 'in';
+  const qtyStr = pending.qty.toFixed(2);
+  const name = pending.product.name.split(' (')[0];
+
+  return (
+    <ModalShell onClose={onClose} title={t(isIn ? 'titleIn' : 'titleOut')} icon={pending.type}>
+      <div className="space-y-5">
+        <p
+          style={{
+            fontSize: '1.1rem',
+            color: 'var(--ink-700)',
+            lineHeight: 1.5,
+            fontFamily: 'var(--font-body)',
+          }}
+        >
+          {t(isIn ? 'bodyIn' : 'bodyOut', {
+            qty: qtyStr,
+            unit: pending.product.unit,
+            name,
+          })}
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="btn-secondary flex-1"
+            style={{ minHeight: 80, fontSize: '1.25rem' }}
+          >
+            {t('cancel')}
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1"
+            style={{
+              minHeight: 80,
+              minWidth: 80,
+              background: isIn ? 'var(--cinnabar)' : 'var(--ink-900)',
+              color: 'var(--paper-50)',
+              border: 'none',
+              borderRadius: 14,
+              fontSize: '1.25rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: isIn
+                ? '0 2px 0 var(--cinnabar-deep)'
+                : '0 2px 0 var(--ink-700)',
+              transition: 'transform 120ms ease',
+            }}
+            onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(1px) scale(0.99)'; }}
+            onMouseUp={(e) => { e.currentTarget.style.transform = 'none'; }}
+            autoFocus
+          >
+            {t('confirm')}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
   );
 }

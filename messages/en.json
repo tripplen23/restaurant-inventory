@@ -61,6 +61,14 @@
     "toastOut": "{qty} {unit} out — {name}",
     "toastIn": "{qty} {unit} in — {name}"
   },
+  "Confirm": {
+    "titleIn": "Confirm stock in",
+    "titleOut": "Confirm stock out",
+    "bodyIn": "Stock in {qty} {unit} of {name}?",
+    "bodyOut": "Stock out {qty} {unit} of {name}?",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
   "History": {
     "title": "History",
     "noTransactions": "No transactions yet"
