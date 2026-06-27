@@ -399,63 +399,22 @@ function ProductRow({
         padding: '12px 0',
       }}
     >
-      {/* Top: product name + on-hand (always visible) */}
-      <div className="card-top">
-        <div className="min-w-0 flex-1">
-          <div className="product-name">
-            {product.name.split(' (')[0]}
-          </div>
-          <div className="mt-1.5">
-            <StockBadge
-              level={level}
-              stock={product.current_stock}
-              threshold={product.threshold}
-            />
-          </div>
+      {/* Column 1: product name + status badge (left) */}
+      <div className="card-name">
+        <div className="product-name">
+          {product.name.split(' (')[0]}
         </div>
-
-        <div className="text-right" style={{ flexShrink: 0, marginLeft: 12 }}>
-          <div
-            className="on-hand-num"
-            style={{
-              color: level === 'ok' ? 'var(--ink-900)' : 'var(--cinnabar)',
-            }}
-          >
-            {product.current_stock.toFixed(2)}
-          </div>
-          <div className="eyebrow">{product.unit}</div>
-        </div>
-
-        <div className="card-actions-desktop" style={{ flexShrink: 0, marginLeft: 8 }}>
-          <IconButton
-            onClick={() => onEdit(product)}
-            aria-label={`Edit ${product.name}`}
-            title={tEdit('title')}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-            </svg>
-          </IconButton>
-          <IconButton
-            onClick={() => onDelete(product)}
-            aria-label={`Delete ${product.name}`}
-            title={tDelete('title')}
-            tone="danger"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-            </svg>
-          </IconButton>
+        <div className="mt-1.5">
+          <StockBadge
+            level={level}
+            stock={product.current_stock}
+            threshold={product.threshold}
+          />
         </div>
       </div>
 
-      {/* Bottom: input + 2 action buttons (mobile=kiosk, desktop=compact columns) */}
-      <div className="card-bottom">
+      {/* Column 2: In input (jade) — desktop: inline input */}
+      <div className="card-col-in">
         <QtyInput
           value={inVal}
           onChange={setInVal}
@@ -465,7 +424,10 @@ function ProductRow({
           placeholder="0"
           column="in"
         />
+      </div>
 
+      {/* Column 3: Out input (cinnabar) — desktop: inline input */}
+      <div className="card-col-out">
         <QtyInput
           value={outVal}
           onChange={setOutVal}
@@ -477,10 +439,52 @@ function ProductRow({
         />
       </div>
 
+      {/* Column 4: On-hand quantity (static number) */}
+      <div className="card-col-onhand">
+        <div
+          className="on-hand-num"
+          style={{
+            color: level === 'ok' ? 'var(--ink-900)' : 'var(--cinnabar)',
+          }}
+        >
+          {product.current_stock.toFixed(2)}
+        </div>
+        <div className="eyebrow">{product.unit}</div>
+      </div>
+
+      {/* Column 5: Edit + Delete actions (desktop only) */}
+      <div className="card-actions-desktop">
+        <IconButton
+          onClick={() => onEdit(product)}
+          aria-label={`Edit ${product.name}`}
+          title={tEdit('title')}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+          </svg>
+        </IconButton>
+        <IconButton
+          onClick={() => onDelete(product)}
+          aria-label={`Delete ${product.name}`}
+          title={tDelete('title')}
+          tone="danger"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          </svg>
+        </IconButton>
+      </div>
+
+      {/* Error message — full width on mobile, hidden on desktop unless needed */}
       {err && (
         <div
+          className="card-error"
           style={{
-            gridColumn: '1 / -1',
             color: 'var(--urgent)',
             fontSize: '0.8rem',
             fontWeight: 600,

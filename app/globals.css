@@ -271,40 +271,86 @@
    Responsive — stock card (2-row kiosk on mobile, 5-col grid on iPad+)
    =========================================================================== */
 
-/* The product card is a flexbox column with 2 rows:
-     .card-top  = product name + on-hand + (desktop-only) edit/delete
-     .card-bottom = input row (1 input + 1 action button per direction)
-   On iPad+ (>=768px) it falls back to the original 5-column grid. */
+/* The product card uses a 5-column grid on desktop and a 2-row stacked
+   layout on mobile. Column order is the same in both modes:
+     1. Product name + status badge
+     2. In input  (jade)
+     3. Out input (cinnabar)
+     4. On-hand quantity
+     5. Edit / Delete actions (desktop only)
+*/
 .product-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-}
-
-.card-bottom {
   display: grid;
-  /* Mobile: input + action button per direction, two side-by-side blocks */
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  /* Mobile: 4 rows — name, onhand, in/out inputs, error */
+  grid-template-areas:
+    "name"
+    "onhand"
+    "in"
+    "out";
+  grid-template-columns: 1fr;
+  row-gap: 10px;
+  column-gap: 8px;
+  align-items: stretch;
 }
 
+.card-name { grid-area: name; min-width: 0; }
+.card-col-onhand {
+  grid-area: onhand;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  justify-content: flex-start;
+}
+.card-col-in  { grid-area: in;  min-width: 0; }
+.card-col-out { grid-area: out; min-width: 0; }
+.card-error  { grid-column: 1 / -1; }
+.card-actions-desktop { display: none; }
+
+/* qty-wrapper is a flex row so the input + action button sit side-by-side
+   on mobile (the action button is hidden on desktop). */
 .qty-wrapper {
   position: relative;
   display: flex;
   align-items: stretch;
   gap: 6px;
 }
-
 .qty-wrapper input.qty-input {
   flex: 1;
   min-width: 0;
+}
+@media (min-width: 768px) {
+  .qty-wrapper { display: block; }
+  .qty-wrapper input.qty-input { width: 100%; }
+}
+
+@media (max-width: 767px) {
+  .card-col-onhand { justify-content: space-between; }
+  .card-col-onhand .on-hand-num { font-size: 1.4rem; }
+  .card-col-onhand .eyebrow { font-size: 0.85rem; color: var(--ink-500); }
+}
+
+@media (min-width: 768px) {
+  .product-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 110px 110px 88px;
+    grid-template-areas: "name in out onhand actions";
+    align-items: center;
+    gap: 12px;
+  }
+  .card-col-onhand {
+    justify-content: flex-end;
+    text-align: right;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .card-col-onhand .on-hand-num { font-size: 1.3rem; }
+  .card-actions-desktop {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .card-error { grid-column: 1 / -1; }
 }
 
 /* Inline action button — mobile only by default */
@@ -313,7 +359,6 @@
 }
 
 @media (max-width: 767px) {
-  .card-actions-desktop { display: none; }
   .qty-action {
     display: inline-flex;
     align-items: center;
@@ -323,7 +368,7 @@
     min-width: 80px;
     min-height: 56px;
     border: none;
-    border-radius: 6;
+    border-radius: 6px;
     font-family: var(--font-body);
     font-weight: 600;
     font-size: 0.95rem;
@@ -339,21 +384,6 @@
     font-weight: 500;
   }
   .qty-action-label { font-size: 0.8rem; }
-}
-
-@media (min-width: 768px) {
-  /* On iPad+ restore the original 5-column grid layout */
-  .product-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 100px 100px 110px 88px;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-top { display: contents; }
-  .card-bottom { display: contents; }
-  .card-actions-desktop { display: flex; gap: 6px; justify-content: flex-end; }
-  .qty-wrapper { display: block; }
-  .qty-action { display: none !important; }
 }
 
 /* Product name — readable on all sizes */
@@ -409,9 +439,9 @@
 @media (min-width: 768px) {
   .stock-list-header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 100px 100px 110px 88px;
+    grid-template-columns: minmax(0, 1fr) 110px 110px 110px 88px;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     color: var(--ink-500);
     font-size: 0.75rem;
     font-weight: 500;
