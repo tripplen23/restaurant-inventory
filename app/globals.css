@@ -1,0 +1,260 @@
+/* ===========================================================================
+   Kitchen Stock — "Tokyo dawn" design system
+   Aesthetic: warm washi paper + ink + cinnabar + jade
+   Constraint: glove-friendly touch, 80px min hit-target, iPad kiosk
+   =========================================================================== */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Surface */
+    --paper-50: #FAF6EE;   /* main bg — warm washi */
+    --paper-100: #F2EBDC;  /* raised surface */
+    --paper-200: #E8DEC8;  /* hairline rule on paper */
+    --ink-900: #1A1814;    /* primary text */
+    --ink-700: #3D362C;    /* secondary text */
+    --ink-500: #6B6354;    /* tertiary text */
+
+    /* Brand accent — single, locked */
+    --cinnabar: #B5371F;   /* vermillion, seal red */
+    --cinnabar-soft: #E8B8AC;
+    --cinnabar-deep: #8A2A18;
+
+    /* Semantic */
+    --jade: #4A6B4A;       /* "OK", healthy stock */
+    --jade-soft: #C8D6C2;
+    --warning: #C58A2E;    /* low / warning — amber, not red */
+    --urgent: #B5371F;     /* reuse cinnabar for urgency */
+
+    /* Type — populated by next/font via CSS variables on <html> */
+    --font-display: var(--font-mincho), 'Shippori Mincho', 'Noto Serif JP', Georgia, serif;
+    --font-body: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: var(--font-mono-loaded), 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+    /* Shape — locked: pill buttons, soft-16 cards, square inputs */
+    --radius-pill: 9999px;
+    --radius-card: 14px;
+    --radius-input: 4px;
+
+    /* Touch */
+    --touch-min: 80px;
+  }
+
+  html, body {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    font-family: var(--font-body);
+    color: var(--ink-900);
+    background: var(--paper-50);
+  }
+
+  body {
+    /* iOS Safari: no bounce when scrolling past edges inside kiosk */
+    overscroll-behavior: none;
+    /* Subtle paper texture using SVG noise — one fixed layer, pointer-events none */
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(122, 92, 62, 0.04), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(181, 55, 31, 0.025), transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  /* Touch buttons — uniform hit zone, no card chrome */
+  .btn-touch {
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+    border-radius: var(--radius-card);
+    font-weight: 600;
+    font-size: 1.25rem;
+    padding: 1rem 1.5rem;
+    transition: transform 120ms ease, background-color 200ms ease, color 200ms ease;
+  }
+  .btn-touch:active {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  /* Primary action — cinnabar (sealed) */
+  .btn-primary {
+    @apply btn-touch;
+    background: var(--cinnabar);
+    color: var(--paper-50);
+    box-shadow: 0 2px 0 var(--cinnabar-deep);
+  }
+  .btn-primary:hover { background: var(--cinnabar-deep); }
+
+  /* Secondary — ink on paper */
+  .btn-secondary {
+    @apply btn-touch;
+    background: var(--paper-50);
+    color: var(--ink-900);
+    border: 1.5px solid var(--paper-200);
+  }
+  .btn-secondary:hover { background: var(--paper-100); }
+
+  /* Ghost — for "back / cancel" */
+  .btn-ghost {
+    @apply btn-touch;
+    background: transparent;
+    color: var(--ink-700);
+  }
+  .btn-ghost:hover { color: var(--ink-900); }
+
+  /* Big number display (stock quantities, numpad read-out) */
+  .big-number {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  /* Section heading — editorial mincho */
+  .h-display {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--ink-900);
+    letter-spacing: -0.015em;
+  }
+
+  .h-section {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--ink-900);
+  }
+
+  /* Eyebrow — restrained, no uppercase tracking */
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--ink-500);
+    letter-spacing: 0;
+  }
+
+  /* Card — soft warm surface, not a box */
+  .card {
+    background: var(--paper-50);
+    border: 1px solid var(--paper-200);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+  }
+
+  /* Hairline rule — dividers instead of card chrome */
+  .rule-y { border-top: 1px solid var(--paper-200); }
+  .rule-x { border-left: 1px solid var(--paper-200); }
+
+  /* Form input */
+  .input-field {
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 0 1.25rem;
+    font-size: 1.5rem;
+    font-family: var(--font-body);
+    background: var(--paper-50);
+    border: 1.5px solid var(--paper-200);
+    border-radius: var(--radius-input);
+    color: var(--ink-900);
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: var(--ink-900);
+    background: var(--paper-100);
+  }
+  .input-field::placeholder {
+    color: var(--ink-500);
+  }
+}
+
+@layer utilities {
+  /* Hanko (seal) stamp — used as signature mark */
+  .hanko {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 4px;
+    background: var(--cinnabar);
+    color: var(--paper-50);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.1rem;
+    line-height: 1;
+    transform: rotate(-3deg);
+    box-shadow: 0 0 0 2px var(--paper-50) inset, 0 1px 2px rgba(26, 24, 20, 0.2);
+    flex-shrink: 0;
+  }
+  .hanko-lg {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1.5rem;
+  }
+  .hanko-outline {
+    background: transparent;
+    color: var(--cinnabar);
+    box-shadow: 0 0 0 2px var(--cinnabar) inset, 0 0 0 4px var(--paper-50) inset, 0 0 0 5px var(--cinnabar) inset;
+  }
+  .hanko-jade {
+    background: var(--jade);
+  }
+  .hanko-ink {
+    background: var(--ink-900);
+  }
+
+  /* Tabular numbers everywhere for quantities */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ===========================================================================
+   Animations — kiosk-appropriate, no infinite loops
+   =========================================================================== */
+
+@keyframes seal-stamp {
+  0%   { transform: scale(1.4) rotate(-12deg); opacity: 0; }
+  60%  { transform: scale(0.92) rotate(-1deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-3deg); opacity: 1; }
+}
+
+.animate-stamp {
+  animation: seal-stamp 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes number-count {
+  from { opacity: 0.4; transform: translateY(2px); }
+  to   { opacity: 1;   transform: translateY(0); }
+}
+
+.animate-count {
+  animation: number-count 360ms ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-stamp { animation: none; }
+  .animate-count { animation: none; }
+}
+
+/* Print: white background, hide nav for reorder list */
+@media print {
+  nav, .no-print { display: none !important; }
+  body { background: white; }
+  .card { border: 1px solid #ccc; }
+}
