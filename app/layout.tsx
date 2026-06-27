@@ -60,7 +60,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Nav />
-          <main className="mx-auto max-w-5xl px-5 pb-32 pt-6">{children}</main>
+          <main className="layout-main mx-auto max-w-5xl px-5 pb-32 pt-6">{children}</main>
         </NextIntlClientProvider>
       </body>
     </html>

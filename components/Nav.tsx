@@ -117,7 +117,7 @@ export function Nav() {
 
       {/* Tab bar */}
       <nav
-        className="mx-auto max-w-5xl px-3 flex gap-1.5"
+        className="nav-tab-list mx-auto max-w-5xl px-3"
         aria-label="Primary"
       >
         {TABS.map((t) => {

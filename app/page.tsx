@@ -145,9 +145,8 @@ export default function HomePage() {
       {/* Stock list — inline Out/In inputs + Edit/Delete */}
       <section>
         <div
-          className="grid items-center gap-3 pb-2"
+          className="stock-grid items-center gap-2 pb-2"
           style={{
-            gridTemplateColumns: '1fr 88px 88px 110px 88px',
             color: 'var(--ink-500)',
             fontSize: '0.75rem',
             fontWeight: 500,
@@ -155,8 +154,8 @@ export default function HomePage() {
           }}
         >
           <div>{t('colProduct')}</div>
-          <div className="text-center" style={{ color: 'var(--ink-900)' }}>{t('colOut')}</div>
-          <div className="text-center" style={{ color: 'var(--cinnabar)' }}>{t('colIn')}</div>
+          <div className="text-center" style={{ color: 'var(--jade)' }}>{t('colIn')}</div>
+          <div className="text-center" style={{ color: 'var(--cinnabar)' }}>{t('colOut')}</div>
           <div className="text-right">{t('colOnHand')}</div>
           <div></div>
         </div>
@@ -237,7 +236,7 @@ export default function HomePage() {
               if (navigator.vibrate) navigator.vibrate(40);
               showToast({
                 kind: tx.type,
-                tone: tx.type === 'out' ? 'ink' : 'cinnabar',
+                tone: tx.type === 'out' ? 'cinnabar' : 'jade',
                 text:
                   tx.type === 'out'
                     ? tTx('toastOut', {
@@ -396,23 +395,13 @@ function ProductRow({
 
   return (
     <li
-      className="grid items-center gap-3 py-3"
+      className="stock-grid items-center gap-2 py-3"
       style={{
-        gridTemplateColumns: '1fr 88px 88px 110px 88px',
         borderBottom: '1px solid var(--paper-200)',
       }}
     >
       <div className="min-w-0 pr-2">
-        <div
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '1.4rem',
-            fontWeight: 600,
-            color: 'var(--ink-900)',
-            lineHeight: 1.2,
-            letterSpacing: '-0.01em',
-          }}
-        >
+        <div className="product-name">
           {product.name.split(' (')[0]}
         </div>
         <div className="mt-1.5">
@@ -425,31 +414,28 @@ function ProductRow({
       </div>
 
       <QtyInput
-        value={outVal}
-        onChange={setOutVal}
-        onKeyDown={(e) => handleKey(e, 'out', outVal, setOutVal)}
-        onBlur={() => handleBlur('out', outVal)}
-        tone="ink"
-        placeholder="0"
-      />
-
-      <QtyInput
         value={inVal}
         onChange={setInVal}
         onKeyDown={(e) => handleKey(e, 'in', inVal, setInVal)}
         onBlur={() => handleBlur('in', inVal)}
+        tone="jade"
+        placeholder="0"
+      />
+
+      <QtyInput
+        value={outVal}
+        onChange={setOutVal}
+        onKeyDown={(e) => handleKey(e, 'out', outVal, setOutVal)}
+        onBlur={() => handleBlur('out', outVal)}
         tone="cinnabar"
         placeholder="0"
       />
 
       <div className="text-right">
         <div
-          className="num"
+          className="on-hand-num"
           style={{
-            fontSize: '1.4rem',
-            fontWeight: 600,
             color: level === 'ok' ? 'var(--ink-900)' : 'var(--cinnabar)',
-            lineHeight: 1.1,
           }}
         >
           {product.current_stock.toFixed(2)}
@@ -515,10 +501,10 @@ function QtyInput({
   onChange: (v: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onBlur: () => void;
-  tone: 'ink' | 'cinnabar';
+  tone: 'jade' | 'cinnabar';
   placeholder: string;
 }) {
-  const accent = tone === 'cinnabar' ? 'var(--cinnabar)' : 'var(--ink-900)';
+  const accent = tone === 'jade' ? 'var(--jade)' : 'var(--cinnabar)';
   return (
     <div className="relative">
       <input
@@ -529,7 +515,7 @@ function QtyInput({
         onKeyDown={onKeyDown}
         onBlur={onBlur}
         placeholder={placeholder}
-        className="num w-full text-center outline-none"
+        className="qty-input num w-full text-center outline-none"
         style={{
           height: 56,
           padding: '0 8px',
@@ -828,7 +814,9 @@ function ModalShell({
     icon === 'out' ? '−' :
     '✎';
   const hankoBg =
-    icon === 'danger' || icon === 'in' ? 'var(--cinnabar)' :
+    icon === 'danger' ? 'var(--cinnabar)' :
+    icon === 'in' ? 'var(--jade)' :
+    icon === 'out' ? 'var(--cinnabar)' :
     'var(--ink-900)';
 
   return (
@@ -927,7 +915,7 @@ function ConfirmTxModal({
             style={{
               minHeight: 80,
               minWidth: 80,
-              background: isIn ? 'var(--cinnabar)' : 'var(--ink-900)',
+              background: isIn ? 'var(--jade)' : 'var(--cinnabar)',
               color: 'var(--paper-50)',
               border: 'none',
               borderRadius: 14,
@@ -935,8 +923,8 @@ function ConfirmTxModal({
               fontWeight: 600,
               cursor: 'pointer',
               boxShadow: isIn
-                ? '0 2px 0 var(--cinnabar-deep)'
-                : '0 2px 0 var(--ink-700)',
+                ? '0 2px 0 #3a533a'
+                : '0 2px 0 var(--cinnabar-deep)',
               transition: 'transform 120ms ease',
             }}
             onMouseDown={(e) => { e.currentTarget.style.transform = 'translateY(1px) scale(0.99)'; }}
