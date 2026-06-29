@@ -346,9 +346,28 @@ function ProductRow({
   const [outVal, setOutVal] = useState('');
   const [inVal, setInVal] = useState('');
   const [err, setErr] = useState<string | null>(null);
+  // Overflow menu (mobile): ⋯ button reveals Edit/Delete popover
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   // refs to detect double-fire between Enter and blur on the same input
   const lastOutSubmit = useRef<number>(0);
   const lastInSubmit = useRef<number>(0);
+
+  // Close overflow menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+    };
+  }, [menuOpen]);
 
   const request = (type: 'in' | 'out', raw: string) => {
     const v = raw.trim();
@@ -399,17 +418,69 @@ function ProductRow({
         padding: '12px 0',
       }}
     >
-      {/* Column 1: product name + status badge (left) */}
+      {/* Column 1: product name + status badge (left) + overflow menu button (mobile) */}
       <div className="card-name">
-        <div className="product-name">
-          {product.name.split(' (')[0]}
+        <div className="min-w-0 flex-1">
+          <div className="product-name">
+            {product.name.split(' (')[0]}
+          </div>
+          <div className="mt-1.5">
+            <StockBadge
+              level={level}
+              stock={product.current_stock}
+              threshold={product.threshold}
+            />
+          </div>
         </div>
-        <div className="mt-1.5">
-          <StockBadge
-            level={level}
-            stock={product.current_stock}
-            threshold={product.threshold}
-          />
+
+        {/* Mobile overflow menu — ⋯ button + popover with Edit/Delete */}
+        <div className="card-overflow" ref={menuRef}>
+          <button
+            type="button"
+            className="overflow-trigger"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={`Actions for ${product.name}`}
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            title="More"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <circle cx="5" cy="12" r="2" />
+              <circle cx="12" cy="12" r="2" />
+              <circle cx="19" cy="12" r="2" />
+            </svg>
+          </button>
+          {menuOpen && (
+            <div className="overflow-popover" role="menu">
+              <button
+                type="button"
+                className="overflow-item"
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); onEdit(product); }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+                <span>{tEdit('title')}</span>
+              </button>
+              <button
+                type="button"
+                className="overflow-item overflow-item-danger"
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); onDelete(product); }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                  <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                </svg>
+                <span>{tDelete('title')}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
